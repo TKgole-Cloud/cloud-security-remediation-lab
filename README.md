@@ -83,3 +83,132 @@ The project follows:
 > **Understand → Build → Verify → Remediate → Validate → Document**
 
 Only significant security evidence will be captured as screenshots.
+
+# Finding 01 — Storage Public Access
+
+## Status
+
+Open
+
+## Finding
+
+The Azure Storage Account `zembecloudsecuritylab01` is configured with public blob access enabled.
+
+## Evidence
+
+Azure CLI verification confirmed:
+
+```text
+httpsOnly    = true
+publicAccess = true
+```
+
+Screenshot:
+
+`../docs/screenshots/finding-01-storage-before.png`
+
+## Why This Matters
+
+Allowing public blob access can increase the risk of data being exposed if a container or blob is made public unintentionally.
+
+The actual impact depends on what data is stored and whether any containers or blobs are publicly accessible.
+
+## Current State
+
+```text
+Public blob access: ENABLED
+```
+
+## Planned Remediation
+
+We will investigate the security recommendation and determine whether public access is required.
+
+If it is not required, we will disable public blob access using Terraform.
+
+## Validation
+
+Validation will be performed after remediation to confirm that the configuration has changed and the relevant security recommendation has been addressed.
+
+
+## Phase 2 — Security Finding 01: Storage Public Access
+
+### Finding
+
+The Storage Account `zembecloudsecuritylab01` was intentionally configured with public blob access enabled to simulate a security finding.
+
+Initial configuration:
+
+```text
+publicAccess = true
+```
+
+### Investigation
+
+The Storage Account configuration was verified directly using Azure CLI.
+
+Microsoft Defender for Cloud did not return an evaluated recommendation for this resource in the lab environment. Azure Policy was also tested, but returned zero applicable resources.
+
+The resource configuration was therefore used as the authoritative evidence for this lab finding.
+
+### Risk
+
+Unnecessary public blob access can increase the risk of unintended data exposure if containers or blobs are made publicly accessible.
+
+The finding was assessed as:
+
+* Impact: Medium
+* Likelihood: Medium
+* Priority: Medium
+
+### Remediation
+
+The Terraform configuration was changed from:
+
+```hcl
+allow_nested_items_to_be_public = true
+```
+
+to:
+
+```hcl
+allow_nested_items_to_be_public = false
+```
+
+Terraform successfully applied the change.
+
+### Validation
+
+Azure CLI confirmed the final configuration:
+
+```text
+publicAccess = false
+httpsOnly    = true
+```
+
+Evidence:
+
+* Before: `docs/screenshots/finding-01-storage-before.png`
+* After: `docs/screenshots/finding-01-storage-after.png`
+* Detailed finding: `findings/finding-01-storage-public-access.md`
+
+### Finding Status
+
+**Remediated**
+
+### Remediation Workflow
+
+```text
+Identify
+   ↓
+Investigate
+   ↓
+Assess Risk
+   ↓
+Prioritize
+   ↓
+Remediate with Terraform
+   ↓
+Validate with Azure CLI
+   ↓
+Document Evidence
+```
