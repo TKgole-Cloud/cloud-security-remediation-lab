@@ -4,59 +4,75 @@
 
 This project simulates a real-world cloud security remediation engagement for a resource-constrained startup.
 
-The environment will intentionally contain selected security configuration weaknesses. Microsoft Defender for Cloud will be used to identify security recommendations, after which the findings will be assessed, prioritized, remediated, and validated.
+The environment contains intentionally introduced security configuration weaknesses. The goal is to identify, assess, prioritize, remediate, validate, and document those findings using Azure and Terraform.
 
-The goal is to demonstrate a practical Cloud Security Engineer workflow rather than simply deploying Azure resources.
+The project focuses on demonstrating a practical **Cloud Security Engineer workflow** rather than simply deploying cloud infrastructure.
+
+---
 
 ## Scenario
 
 A startup has a growing Azure environment but limited security resources.
 
-A security assessment identifies multiple security findings. The engineering team cannot remediate everything at once, so the highest-priority findings must be identified and addressed first.
+A security assessment identifies multiple security findings. The engineering team cannot remediate everything at once, so findings must be assessed and prioritized before remediation.
 
 ### Security Remediation Workflow
 
 ```text
-Security Findings
-       ↓
+Security Finding
+      ↓
 Understand the Issue
-       ↓
+      ↓
 Assess Risk
-       ↓
+      ↓
 Prioritize
-       ↓
+      ↓
 Remediate
-       ↓
+      ↓
 Validate
-       ↓
+      ↓
 Document Evidence
 ```
+
+---
 
 ## Technologies
 
 * Microsoft Azure
 * Microsoft Defender for Cloud
+* Azure Policy
 * Terraform
 * Azure RBAC / IAM
 * Azure Networking
 * Azure Storage
-* Azure Key Vault
+* Azure CLI
 * GitHub
 
-## Current Architecture
+---
 
-The project currently contains the foundational Azure Resource Group:
+## Architecture
 
 ```text
 Azure Subscription
-       │
-       ▼
+        │
+        ▼
 rg-cloud-security-lab
-       │
-       └── Security lab resources
+        │
+        ├── Storage Account
+        │     └── Public access finding
+        │
+        ├── Network Security Group
+        │     └── SSH exposure finding
+        │
+        └── Azure RBAC
+              └── Excessive Contributor access
 ```
 
-## Phase 1 — Terraform Foundation
+The security findings were intentionally introduced, investigated, remediated, and validated.
+
+---
+
+# Phase 1 — Terraform Foundation
 
 ### Completed
 
@@ -76,65 +92,13 @@ rg-cloud-security-lab
 | Environment  | Lab                     |
 | Provisioning | Terraform               |
 
-## Project Principle
-
-The project follows:
-
-> **Understand → Build → Verify → Remediate → Validate → Document**
-
-Only significant security evidence will be captured as screenshots.
+---
 
 # Finding 01 — Storage Public Access
 
-## Status
-
-Open
-
 ## Finding
 
-The Azure Storage Account `zembecloudsecuritylab01` is configured with public blob access enabled.
-
-## Evidence
-
-Azure CLI verification confirmed:
-
-```text
-httpsOnly    = true
-publicAccess = true
-```
-
-Screenshot:
-
-`../docs/screenshots/finding-01-storage-before.png`
-
-## Why This Matters
-
-Allowing public blob access can increase the risk of data being exposed if a container or blob is made public unintentionally.
-
-The actual impact depends on what data is stored and whether any containers or blobs are publicly accessible.
-
-## Current State
-
-```text
-Public blob access: ENABLED
-```
-
-## Planned Remediation
-
-We will investigate the security recommendation and determine whether public access is required.
-
-If it is not required, we will disable public blob access using Terraform.
-
-## Validation
-
-Validation will be performed after remediation to confirm that the configuration has changed and the relevant security recommendation has been addressed.
-
-
-## Phase 2 — Security Finding 01: Storage Public Access
-
-### Finding
-
-The Storage Account `zembecloudsecuritylab01` was intentionally configured with public blob access enabled to simulate a security finding.
+The Storage Account `zembecloudsecuritylab01` was intentionally configured with public blob access enabled.
 
 Initial configuration:
 
@@ -142,25 +106,23 @@ Initial configuration:
 publicAccess = true
 ```
 
-### Investigation
+## Investigation
 
-The Storage Account configuration was verified directly using Azure CLI.
+Azure CLI was used to verify the actual Storage Account configuration.
 
-Microsoft Defender for Cloud did not return an evaluated recommendation for this resource in the lab environment. Azure Policy was also tested, but returned zero applicable resources.
+Microsoft Defender for Cloud did not return an evaluated recommendation for this resource in the lab environment. Azure Policy was also tested but returned zero applicable resources.
 
-The resource configuration was therefore used as the authoritative evidence for this lab finding.
+The Azure resource configuration was therefore used as the authoritative evidence for this finding.
 
-### Risk
-
-Unnecessary public blob access can increase the risk of unintended data exposure if containers or blobs are made publicly accessible.
-
-The finding was assessed as:
+## Risk Assessment
 
 * Impact: Medium
 * Likelihood: Medium
 * Priority: Medium
 
-### Remediation
+Allowing public blob access can increase the risk of unintended data exposure if containers or blobs are made publicly accessible.
+
+## Remediation
 
 The Terraform configuration was changed from:
 
@@ -174,70 +136,54 @@ to:
 allow_nested_items_to_be_public = false
 ```
 
-Terraform successfully applied the change.
+Terraform was then applied successfully.
 
-### Validation
+## Validation
 
-Azure CLI confirmed the final configuration:
+Azure CLI confirmed:
 
 ```text
 publicAccess = false
 httpsOnly    = true
 ```
 
-Evidence:
+### Evidence
 
 * Before: `docs/screenshots/finding-01-storage-before.png`
 * After: `docs/screenshots/finding-01-storage-after.png`
 * Detailed finding: `findings/finding-01-storage-public-access.md`
 
-### Finding Status
+### Status
 
-**Remediated**
+**Remediated ✅**
 
-### Remediation Workflow
+---
 
-```text
-Identify
-   ↓
-Investigate
-   ↓
-Assess Risk
-   ↓
-Prioritize
-   ↓
-Remediate with Terraform
-   ↓
-Validate with Azure CLI
-   ↓
-Document Evidence
-```
+# Finding 02 — Internet-Exposed SSH
 
-## Phase 3 — Security Finding 02: Internet-Exposed SSH
-
-### Finding
+## Finding
 
 The Network Security Group `nsg-cloud-security-lab` initially allowed inbound SSH traffic on TCP port 22 from any source.
 
-Initial state:
+Initial configuration:
 
 ```text
 Source: *
 Destination Port: 22
 Access: Allow
+Protocol: TCP
+Direction: Inbound
 ```
 
-### Risk
-
-Allowing SSH from any source increases the network attack surface and exposes the service to unwanted connection attempts.
-
-Risk assessment:
+## Risk Assessment
 
 * Impact: Medium
 * Likelihood: Medium
 * Priority: Medium
 
-### Remediation
+Allowing SSH from any source increases the network attack surface and exposes the service to unwanted connection attempts.
+
+## Remediation
 
 The NSG rule was changed from:
 
@@ -253,9 +199,9 @@ source_address_prefix = "VirtualNetwork"
 
 Terraform was used to apply the change.
 
-### Validation
+## Validation
 
-Azure CLI confirmed the final rule configuration:
+Azure CLI confirmed:
 
 ```text
 Source: VirtualNetwork
@@ -263,59 +209,65 @@ Destination Port: 22
 Access: Allow
 ```
 
-Evidence:
+The rule no longer permits SSH from arbitrary internet sources through this NSG rule.
+
+### Evidence
 
 * Before: `docs/screenshots/finding-02-network-before.png`
 * After: `docs/screenshots/finding-02-network-after.png`
 * Detailed finding: `findings/finding-02-network-ssh.md`
 
-### Finding Status
+### Status
 
-**Remediated**
+**Remediated ✅**
 
-## Phase 4 — Security Finding 03: Excessive RBAC Permission
+---
 
-### Finding
+# Finding 03 — Excessive RBAC Permission
 
-The lab Azure identity was assigned the `Contributor` role at the resource-group scope.
+## Finding
+
+The lab Azure identity was temporarily assigned the `Contributor` role at the `rg-cloud-security-lab` resource-group scope.
 
 ```text
 Identity
-   ↓
+    ↓
 Contributor
-   ↓
+    ↓
 rg-cloud-security-lab
 ```
 
 The assignment provided broad resource-management permissions across the resource group.
 
-### Risk
+## Risk Assessment
 
 The assignment was considered excessive for the lab scenario because the required access was read-only.
 
-This demonstrates the Azure RBAC principle of least privilege.
+This demonstrates the Azure RBAC principle of **least privilege**.
 
-### Remediation
+## Remediation
 
-The unnecessary `Contributor` assignment was removed using Terraform.
+The unnecessary `Contributor` role assignment was removed using Terraform.
 
-### Validation
+## Validation
 
-Azure CLI confirmed that no `Contributor` assignment remained at the resource-group scope.
+Azure CLI was used to verify the role assignment at the resource-group scope.
 
-Evidence:
+No `Contributor` assignment remained after remediation.
+
+### Evidence
 
 * Detailed finding: `findings/finding-03-rbac.md`
 
-### Finding Status
+### Status
 
-**Remediated**
+**Remediated ✅**
 
 ---
 
 # Final Security Remediation Summary
 
-The lab simulated a cloud security remediation workflow involving three different security domains.
+Three security findings were investigated and remediated across different security domains.
 
 | Finding                   | Security Area        | Remediation                                | Status       |
 | ------------------------- | -------------------- | ------------------------------------------ | ------------ |
@@ -323,27 +275,9 @@ The lab simulated a cloud security remediation workflow involving three differen
 | Internet-exposed SSH      | Network Security     | Restricted SSH source                      | ✅ Remediated |
 | Excessive RBAC permission | IAM / Access Control | Removed unnecessary Contributor assignment | ✅ Remediated |
 
-## Overall Workflow
+---
 
-```text
-Security Finding
-      ↓
-Understand the Issue
-      ↓
-Assess Risk
-      ↓
-Prioritize
-      ↓
-Remediate with Terraform
-      ↓
-Validate with Azure CLI
-      ↓
-Document Evidence
-      ↓
-Git Commit / Push
-```
-
-## Key Security Principles Demonstrated
+## Security Principles Demonstrated
 
 ### Least Privilege
 
@@ -351,7 +285,7 @@ Access should be limited to what an identity actually requires.
 
 ### Defense in Depth
 
-Security controls should be applied across different layers:
+Security controls were considered across multiple layers:
 
 ```text
 Storage
@@ -365,9 +299,11 @@ Identity / Access
 
 Terraform was used to create, modify, and remove security configurations.
 
-### Verification
+### Independent Validation
 
-Remediation was not considered complete until the final Azure configuration was independently validated.
+Remediation was not considered complete until the final Azure configuration was independently validated using Azure CLI.
+
+---
 
 ## Important Evidence
 
@@ -385,16 +321,39 @@ Remediation was not considered complete until the final Azure configuration was 
 
 * `findings/finding-03-rbac.md`
 
+---
+
 ## Project Outcome
 
-This project demonstrates a practical cloud security remediation workflow rather than simply deploying Azure infrastructure.
+This project demonstrates a practical cloud security remediation workflow.
 
-The key objective was to demonstrate the ability to:
+The project demonstrates the ability to:
 
 * Identify security weaknesses
-* Understand their security implications
+* Understand security implications
 * Assess and prioritize findings
-* Remediate infrastructure using Terraform
-* Validate changes using Azure CLI
-* Maintain evidence and documentation.
-* Apply least-privilege security principles
+* Remediate Azure infrastructure using Terraform
+* Apply least-privilege principles
+* Validate cloud configuration using Azure CLI
+* Maintain security evidence
+* Document remediation activities
+
+### Core Workflow
+
+```text
+Identify
+   ↓
+Investigate
+   ↓
+Assess
+   ↓
+Prioritize
+   ↓
+Remediate
+   ↓
+Validate
+   ↓
+Document
+```
+
+**Project Status: Complete ✅**
