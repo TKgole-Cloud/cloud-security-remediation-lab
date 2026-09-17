@@ -212,3 +212,189 @@ Validate with Azure CLI
    ↓
 Document Evidence
 ```
+
+## Phase 3 — Security Finding 02: Internet-Exposed SSH
+
+### Finding
+
+The Network Security Group `nsg-cloud-security-lab` initially allowed inbound SSH traffic on TCP port 22 from any source.
+
+Initial state:
+
+```text
+Source: *
+Destination Port: 22
+Access: Allow
+```
+
+### Risk
+
+Allowing SSH from any source increases the network attack surface and exposes the service to unwanted connection attempts.
+
+Risk assessment:
+
+* Impact: Medium
+* Likelihood: Medium
+* Priority: Medium
+
+### Remediation
+
+The NSG rule was changed from:
+
+```hcl
+source_address_prefix = "*"
+```
+
+to:
+
+```hcl
+source_address_prefix = "VirtualNetwork"
+```
+
+Terraform was used to apply the change.
+
+### Validation
+
+Azure CLI confirmed the final rule configuration:
+
+```text
+Source: VirtualNetwork
+Destination Port: 22
+Access: Allow
+```
+
+Evidence:
+
+* Before: `docs/screenshots/finding-02-network-before.png`
+* After: `docs/screenshots/finding-02-network-after.png`
+* Detailed finding: `findings/finding-02-network-ssh.md`
+
+### Finding Status
+
+**Remediated**
+
+## Phase 4 — Security Finding 03: Excessive RBAC Permission
+
+### Finding
+
+The lab Azure identity was assigned the `Contributor` role at the resource-group scope.
+
+```text
+Identity
+   ↓
+Contributor
+   ↓
+rg-cloud-security-lab
+```
+
+The assignment provided broad resource-management permissions across the resource group.
+
+### Risk
+
+The assignment was considered excessive for the lab scenario because the required access was read-only.
+
+This demonstrates the Azure RBAC principle of least privilege.
+
+### Remediation
+
+The unnecessary `Contributor` assignment was removed using Terraform.
+
+### Validation
+
+Azure CLI confirmed that no `Contributor` assignment remained at the resource-group scope.
+
+Evidence:
+
+* Detailed finding: `findings/finding-03-rbac.md`
+
+### Finding Status
+
+**Remediated**
+
+---
+
+# Final Security Remediation Summary
+
+The lab simulated a cloud security remediation workflow involving three different security domains.
+
+| Finding                   | Security Area        | Remediation                                | Status       |
+| ------------------------- | -------------------- | ------------------------------------------ | ------------ |
+| Storage public access     | Storage Security     | Disabled public blob access                | ✅ Remediated |
+| Internet-exposed SSH      | Network Security     | Restricted SSH source                      | ✅ Remediated |
+| Excessive RBAC permission | IAM / Access Control | Removed unnecessary Contributor assignment | ✅ Remediated |
+
+## Overall Workflow
+
+```text
+Security Finding
+      ↓
+Understand the Issue
+      ↓
+Assess Risk
+      ↓
+Prioritize
+      ↓
+Remediate with Terraform
+      ↓
+Validate with Azure CLI
+      ↓
+Document Evidence
+      ↓
+Git Commit / Push
+```
+
+## Key Security Principles Demonstrated
+
+### Least Privilege
+
+Access should be limited to what an identity actually requires.
+
+### Defense in Depth
+
+Security controls should be applied across different layers:
+
+```text
+Storage
+   ↓
+Network
+   ↓
+Identity / Access
+```
+
+### Infrastructure as Code
+
+Terraform was used to create, modify, and remove security configurations.
+
+### Verification
+
+Remediation was not considered complete until the final Azure configuration was independently validated.
+
+## Important Evidence
+
+### Finding 01 — Storage
+
+* `docs/screenshots/finding-01-storage-before.png`
+* `docs/screenshots/finding-01-storage-after.png`
+
+### Finding 02 — Network
+
+* `docs/screenshots/finding-02-network-before.png`
+* `docs/screenshots/finding-02-network-after.png`
+
+### Finding 03 — IAM
+
+* `findings/finding-03-rbac.md`
+
+## Project Outcome
+
+This project demonstrates a practical cloud security remediation workflow rather than simply deploying Azure infrastructure.
+
+The key objective was to demonstrate the ability to:
+
+* Identify security weaknesses
+* Understand their security implications
+* Assess and prioritize findings
+* Remediate infrastructure using Terraform
+* Validate changes using Azure CLI
+* Maintain evidence and documentation
+* Apply least-privilege security principles
