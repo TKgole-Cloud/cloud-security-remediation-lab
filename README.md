@@ -396,5 +396,5 @@ The key objective was to demonstrate the ability to:
 * Assess and prioritize findings
 * Remediate infrastructure using Terraform
 * Validate changes using Azure CLI
-* Maintain evidence and documentation
+* Maintain evidence and documentation.
 * Apply least-privilege security principles
